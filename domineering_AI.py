@@ -17,15 +17,17 @@ def minimax(board, max_depth, eval_fn):
     # First layer of minimax (maximizes)
     # Returns best PLAY
     max_score = -math.inf
-    max_play = None
+    max_play = []
     for pp in possible_plays(board, board.turn):
         new_board = board.copy()
         new_board.play(pp)
         new_score = mini(new_board, board.turn, max_depth-1, eval_fn)
-        if new_score >= max_score:
+        if new_score > max_score:
             max_score = new_score
-            max_play = pp
-    return max_play
+            max_play = [pp]
+        elif new_score == max_score:
+            max_play.append(pp)
+    return random.choice(max_play)
     
 
 # # # HELPER FUNCTIONS # # #
