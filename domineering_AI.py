@@ -4,55 +4,27 @@ import math
 # # # AI's # # #
 # All return play [r,c]
 
-def human_play(board):
+def human_play(board, null_A, null_B):
     r = input("It is your turn to make a play!\nRow: ")
     c = input("Column: ")
     return [int(r), int(c)]
 
-def random_play(board):
+def random_play(board, null_A, null_B):
     # random player
     return random.choice(possible_plays(board, board.turn))
 
-
-def greedy_play(board):
-    # plays to maximize greedy_score
+def minimax(board, max_depth, eval_fn):
+    # First layer of minimax (maximizes)
+    # Returns best PLAY
     max_score = -math.inf
     max_play = None
-    for option in possible_plays(board, board.turn):
+    for pp in possible_plays(board, board.turn):
         new_board = board.copy()
-        new_board.play(option)
-        new_score = greedy_score(new_board, board.turn)
-        if new_score > max_score:
+        new_board.play(pp)
+        new_score = mini(new_board, board.turn, max_depth-1, eval_fn)
+        if new_score >= max_score:
             max_score = new_score
-            max_play = option
-    return max_play
-
-def greedy_opp_d2_play(board):
-    # plays to maximize greedy_score after opponent reacts to play using minimax
-    # (depth 2 minimax using greedy_score)
-    return minimax(board, board.turn, 2, greedy_score)
-
-def greedy_opp_d3_play(board):
-    # plays to maximize greedy_score after opponent reacts to play using minimax
-    # (depth 2 minimax using greedy_score)
-    return minimax(board, board.turn, 3, greedy_score)
-
-def greedy_opp_d4_play(board):
-    # plays to maximize greedy_score after opponent reacts to play using minimax
-    # (depth 2 minimax using greedy_score)
-    return minimax(board, board.turn, 4, greedy_score)
-
-def greedy_play2(board):
-    # plays to maximize greedy_score2
-    max_score = -math.inf
-    max_play = None
-    for option in possible_plays(board, board.turn):
-        new_board = board.copy()
-        new_board.play(option)
-        new_score = greedy_score2(new_board, board.turn)
-        if new_score > max_score:
-            max_score = new_score
-            max_play = option
+            max_play = pp
     return max_play
     
 
@@ -104,21 +76,6 @@ def greedy_score2(board, player):
         return a - b
     else:
         return b - a
-    
-
-def minimax(board, player, max_depth, eval_fn):
-    # First layer of minimax (maximizes)
-    # Returns best PLAY
-    max_score = -math.inf
-    max_play = None
-    for pp in possible_plays(board, board.turn):
-        new_board = board.copy()
-        new_board.play(pp)
-        new_score = mini(new_board, player, max_depth-1, eval_fn)
-        if new_score >= max_score:
-            max_score = new_score
-            max_play = pp
-    return max_play
 
 def mini(board, player, max_depth, eval_fn):
     # Even layers of minimax (opponent's turn)
