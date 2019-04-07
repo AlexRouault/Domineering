@@ -28,6 +28,25 @@ def minimax(board, max_depth, eval_fn):
         elif new_score == max_score:
             max_play.append(pp)
     return random.choice(max_play)
+
+def alphabeta(board, max_depth, eval_fn):
+    # First layer of alphabeta (maximizes)
+    # Returns best PLAY
+    a = -math.inf
+    b = math.inf
+    max_score = -math.inf
+    max_play = []
+    for pp in possible_plays(board, board.turn):
+        new_board = board.copy()
+        new_board.play(pp)
+        new_score = minab(new_board, board.turn, max_depth-1, a, b, eval_fn)
+        if new_score > max_score:
+            max_score = new_score
+            max_play = [pp]
+        elif new_score == max_score:
+            max_play.append(pp)
+        a = max(a, new_score)
+    return random.choice(max_play)
     
 
 # # # HELPER FUNCTIONS # # #
@@ -107,4 +126,40 @@ def maxi(board, player, max_depth, eval_fn):
             new_score = mini(new_board, player, max_depth-1, eval_fn)
             if new_score > max_score:
                 max_score = new_score
+        return max_score
+
+def minab(board, player, max_depth, a, b, eval_fn):
+    # Even layers of alphabeta (opponent's turn)
+    # Returns worst SCORE opponent can force
+    if max_depth == 0: # At max_depth -> return my evaluated score on current board
+        return eval_fn(board, player)
+    else:
+        min_score = math.inf
+        for pp in possible_plays(board, board.turn):
+            new_board = board.copy()
+            new_board.play(pp)
+            new_score = maxab(new_board, player, max_depth-1, a, b, eval_fn)
+            if new_score < min_score:
+                min_score = new_score
+            b = min(b, min_score)
+            if a > b:
+                break # a cut-off
+        return min_score
+
+def maxab(board, player, max_depth, a, b, eval_fn):
+    # Odd layers of alphabeta (my turn)
+    # Returns best SCORE I can force
+    if max_depth == 0: # At max_depth -> return my evaluated score on current board
+        return eval_fn(board, player)
+    else:
+        max_score = -math.inf
+        for pp in possible_plays(board, board.turn):
+            new_board = board.copy()
+            new_board.play(pp)
+            new_score = minab(new_board, player, max_depth-1, a, b, eval_fn)
+            if new_score > max_score:
+                max_score = new_score
+            a = max(a, max_score)
+            if a > b:
+                break # b cut-off
         return max_score
