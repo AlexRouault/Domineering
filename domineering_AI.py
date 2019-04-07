@@ -109,8 +109,7 @@ def mini(board, player, max_depth, eval_fn):
             new_board = board.copy()
             new_board.play(pp)
             new_score = maxi(new_board, player, max_depth-1, eval_fn)
-            if new_score < min_score:
-                min_score = new_score
+            min_score = min(new_score, min_score)
         return min_score
     
 def maxi(board, player, max_depth, eval_fn):
@@ -124,8 +123,7 @@ def maxi(board, player, max_depth, eval_fn):
             new_board = board.copy()
             new_board.play(pp)
             new_score = mini(new_board, player, max_depth-1, eval_fn)
-            if new_score > max_score:
-                max_score = new_score
+            max_score = max(new_score, max_score)
         return max_score
 
 def minab(board, player, max_depth, a, b, eval_fn):
@@ -139,8 +137,7 @@ def minab(board, player, max_depth, a, b, eval_fn):
             new_board = board.copy()
             new_board.play(pp)
             new_score = maxab(new_board, player, max_depth-1, a, b, eval_fn)
-            if new_score < min_score:
-                min_score = new_score
+            min_score = min(new_score, min_score)
             b = min(b, min_score)
             if a > b:
                 break # a cut-off
@@ -157,8 +154,7 @@ def maxab(board, player, max_depth, a, b, eval_fn):
             new_board = board.copy()
             new_board.play(pp)
             new_score = minab(new_board, player, max_depth-1, a, b, eval_fn)
-            if new_score > max_score:
-                max_score = new_score
+            max_score = max(new_score, max_score)
             a = max(a, max_score)
             if a > b:
                 break # b cut-off
