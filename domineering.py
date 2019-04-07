@@ -53,7 +53,8 @@ class Board:
         return True
 
 def get_players():
-    players = [("human_play", human_play), ("random_play", random_play), ("minimax", minimax), ("alphabeta", alphabeta)]
+    players = [("human_play", human_play), ("random_play", random_play), ("minimax", minimax),
+               ("alphabeta", alphabeta), ("ab_symmetry", ab_symmetry)]
     non_metered = (human_play, random_play) # players that don't have an evaluation function or depth
     eval_fns = [("greedy_score", greedy_score), ("greedy_score2", greedy_score2)]
     

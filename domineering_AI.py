@@ -55,7 +55,40 @@ def alphabeta(board, max_depth, eval_fn):
         a = max(a, new_score)
     print(count)
     return random.choice(max_play)
-    
+
+def ab_symmetry(board, max_depth, eval_fn):
+    # First layer of alphabeta (maximizes)
+    # Returns best PLAY
+    count = 0
+    a = -math.inf
+    b = math.inf
+    max_score = -math.inf
+    max_play = []
+    hs = h_symm(board)
+    vs = v_symm(board)
+    rs = r_symm(board)
+    for pp in possible_plays(board, board.turn):
+        if (hs or rs) and (pp[1] > (board.w + board.turn - 2) // 2):
+            # Plays on right side of board can be cut off
+            continue
+        if vs and (pp[0] > (board.h - board.turn - 1) // 2):
+            # Plays on bottom of board can be cut off
+            continue
+        count += 1
+        new_board = board.copy()
+        new_board.play(pp)
+        new_score, add_count = minab(new_board, board.turn, max_depth-1, a, b, eval_fn)
+        count += add_count
+        if new_score > max_score:
+            max_score = new_score
+            max_play = [pp]
+        elif new_score == max_score:
+            max_play.append(pp)
+        a = max(a, new_score)
+    print(count)
+    return random.choice(max_play)
+
+
 
 # # # HELPER FUNCTIONS # # #
 
@@ -169,6 +202,88 @@ def maxab(board, player, max_depth, a, b, eval_fn):
     else:
         max_score = -math.inf
         for pp in possible_plays(board, board.turn):
+            count += 1
+            new_board = board.copy()
+            new_board.play(pp)
+            new_score, add_count = minab(new_board, player, max_depth-1, a, b, eval_fn)
+            count += add_count            
+            max_score = max(new_score, max_score)
+            a = max(a, max_score)
+            if a > b:
+                break # b cut-off
+        return max_score, count
+
+def h_symm(board):
+    # Returns True if board is horizontally symmetric
+    for r in range(board.h):
+        for c in range(board.w//2):
+            if board.vals[r][c] != board.vals[r][board.w - c - 1]:
+                return False
+    return True
+
+def v_symm(board):
+    # Returns True if board is vertically symmetric
+    for r in range(board.h//2):
+        for c in range(board.w):
+            if board.vals[r][c] != board.vals[board.h - r - 1][c]:
+                return False
+    return True
+
+def r_symm(board):
+    # Returns True if board is rotationally symmetric
+    for r in range(board.h):
+        for c in range(board.w//2):
+            if board.vals[r][c] != board.vals[board.h - r - 1][board.w - c - 1]:
+                return False
+    return True
+
+def minsym(board, player, max_depth, a, b, eval_fn):
+    # Even layers of alphabeta (opponent's turn)
+    # Returns worst SCORE opponent can force
+    count = 0
+    if max_depth == 0: # At max_depth -> return my evaluated score on current board
+        return eval_fn(board, player), count
+    else:
+        min_score = math.inf
+        hs = h_symm(board)
+        vs = v_symm(board)
+        rs = r_symm(board)
+        for pp in possible_plays(board, board.turn):
+            if (hs or rs) and (pp[1] > (board.w + board.turn - 2) // 2):
+                # Plays on right side of board can be cut off
+                continue
+            if vs and (pp[0] > (board.h - board.turn - 1) // 2):
+                # Plays on bottom of board can be cut off
+                continue
+            count += 1
+            new_board = board.copy()
+            new_board.play(pp)
+            new_score, add_count = maxab(new_board, player, max_depth-1, a, b, eval_fn)
+            count += add_count            
+            min_score = min(new_score, min_score)
+            b = min(b, min_score)
+            if a > b:
+                break # a cut-off
+        return min_score, count
+
+def maxsym(board, player, max_depth, a, b, eval_fn):
+    # Odd layers of alphabeta (my turn)
+    # Returns best SCORE I can force
+    count = 0
+    if max_depth == 0: # At max_depth -> return my evaluated score on current board
+        return eval_fn(board, player), count
+    else:
+        max_score = -math.inf
+        hs = h_symm(board)
+        vs = v_symm(board)
+        rs = r_symm(board)
+        for pp in possible_plays(board, board.turn):
+            if (hs or rs) and (pp[1] > (board.w + board.turn - 2) // 2):
+                # Plays on right side of board can be cut off
+                continue
+            if vs and (pp[0] > (board.h - board.turn - 1) // 2):
+                # Plays on bottom of board can be cut off
+                continue
             count += 1
             new_board = board.copy()
             new_board.play(pp)
