@@ -58,15 +58,15 @@ def get_players():
     non_metered = (human_play, random_play) # players that don't have an evaluation function or depth
     eval_fns = [("Legal moves", moves_score), ("Playability", playability_score2)]
     
-    print("Players:")
+    print("\nPlayers:")
     for i in range(len(players)):
         print(i, players[i][0])
-    print("Evaluation functions:")
+    print("\nEvaluation functions:")
     for i in range(len(eval_fns)):
         print(i, eval_fns[i][0])
         
     # Get L player
-    L = players[int(input("Enter index of L-player: "))][1]
+    L = players[int(input("\nEnter index of L-player: "))][1]
     if L in non_metered:
         L_eval_fn = None
         L_depth = None
