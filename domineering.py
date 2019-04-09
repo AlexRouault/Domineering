@@ -53,10 +53,10 @@ class Board:
         return True
 
 def get_players():
-    players = [("human_play", human_play), ("random_play", random_play), ("minimax", minimax),
-               ("alphabeta", alphabeta), ("ab_symmetry", ab_symmetry)]
+    players = [("Human", human_play), ("Random", random_play), ("MiniMax", minimax),
+               ("Alpha-Beta", alphabeta), ("Alpha-Beta with symmetry pruning", ab_symmetry), ("Sorted Alpha-Beta with symmetry pruning", ab_symm_sorted)]
     non_metered = (human_play, random_play) # players that don't have an evaluation function or depth
-    eval_fns = [("greedy_score", greedy_score), ("greedy_score2", greedy_score2)]
+    eval_fns = [("Legal moves", moves_score), ("Playability", playability_score2)]
     
     print("Players:")
     for i in range(len(players)):
@@ -89,6 +89,7 @@ def game():
     h = int(input("Enter board height: "))
     w = int(input("Enter board width: "))
     L, Le, Ld, R, Re, Rd = get_players()
+
     board = Board(h,w)
     board.show()
     while True:

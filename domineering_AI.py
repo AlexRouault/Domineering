@@ -30,7 +30,7 @@ def minimax(board, max_depth, eval_fn):
             max_play = [pp]
         elif new_score == max_score:
             max_play.append(pp)
-    print(count)
+    #print(count)
     return random.choice(max_play)
 
 def alphabeta(board, max_depth, eval_fn):
@@ -53,11 +53,11 @@ def alphabeta(board, max_depth, eval_fn):
         elif new_score == max_score:
             max_play.append(pp)
         a = max(a, new_score)
-    print(count)
+    #print(count)
     return random.choice(max_play)
 
 def ab_symmetry(board, max_depth, eval_fn):
-    # First layer of alphabeta (maximizes)
+    # First layer of alphabeta with pruning by symmetry (maximizes)
     # Returns best PLAY
     count = 0
     a = -math.inf
@@ -77,7 +77,7 @@ def ab_symmetry(board, max_depth, eval_fn):
         count += 1
         new_board = board.copy()
         new_board.play(pp)
-        new_score, add_count = minab(new_board, board.turn, max_depth-1, a, b, eval_fn)
+        new_score, add_count = minsym(new_board, board.turn, max_depth-1, a, b, eval_fn)
         count += add_count
         if new_score > max_score:
             max_score = new_score
@@ -85,7 +85,41 @@ def ab_symmetry(board, max_depth, eval_fn):
         elif new_score == max_score:
             max_play.append(pp)
         a = max(a, new_score)
-    print(count)
+    #print(count)
+    return random.choice(max_play)
+
+def ab_symm_sorted(board, max_depth, eval_fn):
+    # First layer of alphabeta with symmetric pruning (maximizes)
+    # Checks moves that are likely better first for higher chance of ab pruning
+    # Returns best PLAY
+    count = 0
+    a = -math.inf
+    b = math.inf
+    max_score = -math.inf
+    max_play = []
+    hs = h_symm(board)
+    vs = v_symm(board)
+    rs = r_symm(board)
+    sorted_plays = sort_plays(possible_plays(board, board.turn), board, eval_fn)
+    for elem in sorted_plays:
+        pp = elem[1]
+        new_board = elem[2]
+        if (hs or rs) and (pp[1] > (board.w + board.turn - 2) // 2):
+            # Plays on right side of board can be cut off
+            continue
+        if vs and (pp[0] > (board.h - board.turn - 1) // 2):
+            # Plays on bottom of board can be cut off
+            continue
+        count += 1
+        new_score, add_count = minsym(new_board, board.turn, max_depth-1, a, b, eval_fn)
+        count += add_count
+        if new_score > max_score:
+            max_score = new_score
+            max_play = [pp]
+        elif new_score == max_score:
+            max_play.append(pp)
+        a = max(a, new_score)
+    #print(count)
     return random.choice(max_play)
 
 
@@ -108,11 +142,11 @@ def possible_plays(board, player):
                     plays.append([r,c])
     return plays
     
-def greedy_score(board, player):
+def moves_score(board, player):
     # spaces only I can play - spaces only opponent can play
     return len(possible_plays(board, player)) - len(possible_plays(board, not player))
 
-def greedy_score2(board, player):
+def playability_score2(board, player):
     # number of my pieces that can be fit on the board - opponent
     a = 0 # number of horizontal pieces that can be fit on the board
     for r in range(board.h):
@@ -238,7 +272,7 @@ def r_symm(board):
     return True
 
 def minsym(board, player, max_depth, a, b, eval_fn):
-    # Even layers of alphabeta (opponent's turn)
+    # Even layers of alphabeta with symmetric pruning (opponent's turn)
     # Returns worst SCORE opponent can force
     count = 0
     if max_depth == 0: # At max_depth -> return my evaluated score on current board
@@ -258,7 +292,7 @@ def minsym(board, player, max_depth, a, b, eval_fn):
             count += 1
             new_board = board.copy()
             new_board.play(pp)
-            new_score, add_count = maxab(new_board, player, max_depth-1, a, b, eval_fn)
+            new_score, add_count = maxsym(new_board, player, max_depth-1, a, b, eval_fn)
             count += add_count            
             min_score = min(new_score, min_score)
             b = min(b, min_score)
@@ -267,7 +301,7 @@ def minsym(board, player, max_depth, a, b, eval_fn):
         return min_score, count
 
 def maxsym(board, player, max_depth, a, b, eval_fn):
-    # Odd layers of alphabeta (my turn)
+    # Odd layers of alphabeta with symmetric pruning (my turn)
     # Returns best SCORE I can force
     count = 0
     if max_depth == 0: # At max_depth -> return my evaluated score on current board
@@ -287,7 +321,77 @@ def maxsym(board, player, max_depth, a, b, eval_fn):
             count += 1
             new_board = board.copy()
             new_board.play(pp)
-            new_score, add_count = minab(new_board, player, max_depth-1, a, b, eval_fn)
+            new_score, add_count = minsym(new_board, player, max_depth-1, a, b, eval_fn)
+            count += add_count            
+            max_score = max(new_score, max_score)
+            a = max(a, max_score)
+            if a > b:
+                break # b cut-off
+        return max_score, count
+
+def sort_plays(plays, board, eval_fn):
+    # Sorts plays by the value of the gamestate
+    foo = []
+    for p in plays:
+        new_board = board.copy()
+        new_board.play(p)
+        eval_fn(new_board, board.turn)
+        foo.append((eval_fn(new_board, board.turn), p, new_board))
+    return sorted(foo, reverse = True)
+
+def minsort(board, player, max_depth, a, b, eval_fn):
+    # Even layers of alphabeta with symmetric pruning and sorting (opponent's turn)
+    # Returns worst SCORE opponent can force
+    count = 0
+    if max_depth == 0: # At max_depth -> return my evaluated score on current board
+        return eval_fn(board, player), count
+    else:
+        min_score = math.inf
+        hs = h_symm(board)
+        vs = v_symm(board)
+        rs = r_symm(board)
+        sorted_plays = sort_plays(possible_plays(board, board.turn), board, eval_fn)
+        for elem in sorted_plays:
+            pp = elem[1]
+            new_board = elem[2]
+            if (hs or rs) and (pp[1] > (board.w + board.turn - 2) // 2):
+                # Plays on right side of board can be cut off
+                continue
+            if vs and (pp[0] > (board.h - board.turn - 1) // 2):
+                # Plays on bottom of board can be cut off
+                continue
+            count += 1
+            new_score, add_count = maxsort(new_board, player, max_depth-1, a, b, eval_fn)
+            count += add_count            
+            min_score = min(new_score, min_score)
+            b = min(b, min_score)
+            if a > b:
+                break # a cut-off
+        return min_score, count
+
+def maxsort(board, player, max_depth, a, b, eval_fn):
+    # Odd layers of alphabeta with symmetric pruning and sorting (my turn)
+    # Returns best SCORE I can force
+    count = 0
+    if max_depth == 0: # At max_depth -> return my evaluated score on current board
+        return eval_fn(board, player), count
+    else:
+        max_score = -math.inf
+        hs = h_symm(board)
+        vs = v_symm(board)
+        rs = r_symm(board)
+        sorted_plays = sort_plays(possible_plays(board, board.turn), board, eval_fn)
+        for elem in sorted_plays:
+            pp = elem[1]
+            new_board = elem[2]
+            if (hs or rs) and (pp[1] > (board.w + board.turn - 2) // 2):
+                # Plays on right side of board can be cut off
+                continue
+            if vs and (pp[0] > (board.h - board.turn - 1) // 2):
+                # Plays on bottom of board can be cut off
+                continue
+            count += 1
+            new_score, add_count = minsort(new_board, player, max_depth-1, a, b, eval_fn)
             count += add_count            
             max_score = max(new_score, max_score)
             a = max(a, max_score)
