@@ -251,7 +251,7 @@ def h_symm(board):
     # Returns True if board is horizontally symmetric
     for r in range(board.h):
         for c in range(board.w//2):
-            if board.vals[r][c] != board.vals[r][board.w - c - 1]:
+            if (board.vals[r][c] == '.') != (board.vals[r][board.w - c - 1] == '.'):
                 return False
     return True
 
@@ -259,7 +259,7 @@ def v_symm(board):
     # Returns True if board is vertically symmetric
     for r in range(board.h//2):
         for c in range(board.w):
-            if board.vals[r][c] != board.vals[board.h - r - 1][c]:
+            if (board.vals[r][c] == '.') != (board.vals[board.h - r - 1][c] == '.'):
                 return False
     return True
 
@@ -267,7 +267,7 @@ def r_symm(board):
     # Returns True if board is rotationally symmetric
     for r in range(board.h):
         for c in range(board.w//2):
-            if board.vals[r][c] != board.vals[board.h - r - 1][board.w - c - 1]:
+            if (board.vals[r][c] == '.') != (board.vals[board.h - r - 1][board.w - c - 1] == '.'):
                 return False
     return True
 
